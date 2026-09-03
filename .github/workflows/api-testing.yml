@@ -1,0 +1,114 @@
+name: HW06 API Testing CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      run_mode:
+        description: 'Lựa chọn chế độ kiểm thử (all-pass / bug-evidence)'
+        required: true
+        default: 'all-pass'
+        type: choice
+        options:
+          - all-pass
+          - bug-evidence
+
+jobs:
+  api-testing:
+    name: Execute Full API Testing Pipeline
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: eshop/backend/package-lock.json
+
+      - name: Install SUT Backend Dependencies
+        run: |
+          cd eshop/backend
+          npm install
+
+      - name: Install Newman & HTML Reporter
+        run: |
+          npm install -g newman newman-reporter-htmlextra
+
+      - name: Start SUT Backend Server
+        run: |
+          cd eshop/backend
+          node server.js &
+          echo "SERVER_PID=$!" >> $GITHUB_ENV
+
+      - name: Wait for SUT API Readiness
+        run: |
+          echo "Waiting for SUT API on port 3000..."
+          npx wait-on http://localhost:3000/api/products --timeout 20000
+          echo "SUT API is live and ready."
+
+      - name: Prepare Reports Directory
+        run: |
+          mkdir -p reports
+
+      # =================================================================
+      # 1. Pipeline Execution for API A: GET /api/products (39 Test Cases)
+      # =================================================================
+      - name: Run API A Pipeline (GET /api/products)
+        run: |
+          echo "=== Executing API A Test Suite (39 Cases) ==="
+          newman run postman/collections/API_A_Products.postman_collection.json \
+            --environment postman/environments/API_A_Environment.postman_environment.json \
+            --reporters cli,htmlextra \
+            --reporter-htmlextra-export reports/newman-API-A.html \
+            --reporter-htmlextra-title "HW06 - API A (GET /api/products) Test Report"
+
+      # =================================================================
+      # 2. Pipeline Execution for API B: POST /api/cart (41 Test Cases)
+      # =================================================================
+      - name: Run API B Pipeline (POST /api/cart)
+        run: |
+          RUN_MODE="${{ github.event.inputs.run_mode || 'all-pass' }}"
+          echo "=== Executing API B Test Suite (41 Cases) [Mode: $RUN_MODE] ==="
+          if [ "$RUN_MODE" = "bug-evidence" ]; then
+            ENV_FILE="postman/environments/API_B_BugEvidence.postman_environment.json"
+          else
+            ENV_FILE="postman/environments/API_B_Environment.postman_environment.json"
+          fi
+          newman run postman/collections/API_B_Cart.postman_collection.json \
+            --environment "$ENV_FILE" \
+            --reporters cli,htmlextra \
+            --reporter-htmlextra-export reports/newman-API-B.html \
+            --reporter-htmlextra-title "HW06 - API B (POST /api/cart) Test Report"
+
+      # =================================================================
+      # 3. Pipeline Execution for API C: POST /api/admin/import-products (41 Test Cases)
+      # =================================================================
+      - name: Run API C Pipeline (POST /api/admin/import-products)
+        run: |
+          RUN_MODE="${{ github.event.inputs.run_mode || 'all-pass' }}"
+          echo "=== Executing API C Test Suite (41 Cases) [Mode: $RUN_MODE] ==="
+          if [ "$RUN_MODE" = "bug-evidence" ]; then
+            ENV_FILE="postman/environments/API_C_BugEvidence.postman_environment.json"
+          else
+            ENV_FILE="postman/environments/API_C_Environment.postman_environment.json"
+          fi
+          newman run postman/collections/API_C_ImportProducts.postman_collection.json \
+            --environment "$ENV_FILE" \
+            --reporters cli,htmlextra \
+            --reporter-htmlextra-export reports/newman-API-C.html \
+            --reporter-htmlextra-title "HW06 - API C (POST /api/admin/import-products) Test Report"
+
+      - name: Upload Newman HTML Execution Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-html-reports
+          path: reports/
+          retention-days: 14
