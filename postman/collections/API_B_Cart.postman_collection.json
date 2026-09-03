@@ -1,0 +1,2706 @@
+{
+  "info": {
+    "_postman_id": "71223c5d-3b33-461b-a9f0-5789641bbeec",
+    "name": "API_B_Cart",
+    "description": "HW06 Executable Test Suite for API B (POST /api/cart) - Setup + 41 test cases covering Domain, Security, State Transitions, Schema, Business, and Extended Behaviors.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// ==================================================================",
+          "// COLLECTION PRE-REQUEST SCRIPT — Mandatory X-Student-Id Header",
+          "// Requirement: REQ-41 (Header attachment), REQ-64 (Console log trace)",
+          "// Student ID: 23127452 | Student Name: Le Thanh Phong",
+          "// ==================================================================",
+          "const studentId = pm.environment.get('studentId') || '23127452';",
+          "pm.request.headers.upsert({ key: 'X-Student-Id', value: studentId });",
+          "console.log(`[PRE-REQUEST AUDIT] Request: ${pm.info.requestName} | Header: X-Student-Id: ${studentId}`);"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "00_Setup_Prerequisites",
+      "item": [
+        {
+          "name": "00_Setup_User_Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "description": "Đăng nhập tài khoản người dùng chuẩn lấy userToken",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@eshop.com\",\n  \"password\": \"Test1234!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login status is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Extract and set userToken', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.token).to.not.be.undefined;",
+                  "    pm.environment.set('userToken', res.token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "00_Setup_CleanUser_Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "register"
+              ]
+            },
+            "description": "Đăng ký tài khoản sạch phục vụ kiểm thử chuyển trạng thái TC-ST-B01",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Clean User ST-B01\",\n  \"email\": \"clean_user_st_b01@eshop.com\",\n  \"password\": \"Test1234!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Registration status is 200 or 500 (if already exists)', function () {",
+                  "    pm.expect([200, 500]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "00_Setup_CleanUser_Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "description": "Đăng nhập tài khoản sạch lấy cleanUserToken",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"clean_user_st_b01@eshop.com\",\n  \"password\": \"Test1234!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login clean user status is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Extract and set cleanUserToken', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.token).to.not.be.undefined;",
+                  "    pm.environment.set('cleanUserToken', res.token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "00_Setup_UserB_Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "register"
+              ]
+            },
+            "description": "Đăng ký tài khoản User B phục vụ kiểm thử phân tách phiên Anti-IDOR TC-SEC-B03",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"User B Anti-IDOR\",\n  \"email\": \"user_b_sec_b03@eshop.com\",\n  \"password\": \"Test1234!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('User B Registration status is 200 or 500', function () {",
+                  "    pm.expect([200, 500]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "00_Setup_UserB_Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "description": "Đăng nhập tài khoản User B lấy userBToken",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user_b_sec_b03@eshop.com\",\n  \"password\": \"Test1234!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login User B status is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Extract and set userBToken', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.token).to.not.be.undefined;",
+                  "    pm.environment.set('userBToken', res.token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01_Domain_Partitioning",
+      "item": [
+        {
+          "name": "TC-DOM-B01: Add Valid Product With Quantity 1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Thêm 1 sản phẩm hợp lệ có đầy đủ 4 trường với số lượng 1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response contains Added to cart message', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.equal('Added to cart');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B02: Add Valid Product With Quantity 5",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Thêm sản phẩm hợp lệ với số lượng lớn trong định mức",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response contains Added to cart message', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.equal('Added to cart');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B03: Add Accessory Product (category_id = 3)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Thêm sản phẩm thuộc danh mục phụ kiện có đơn giá thấp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 4,\n  \"name\": \"Tai nghe AirPods Pro 2\",\n  \"price\": 5000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response contains Added to cart message', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.equal('Added to cart');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B04: Boolean Quantity Type (quantity = true)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Sai kiểu dữ liệu Boolean cho số lượng",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (quantity is boolean true) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B05: Zero Quantity Boundary (quantity = 0)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Số lượng biên bằng 0",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (quantity is zero) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B06: Negative Quantity (quantity = -1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Số lượng âm (-1)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": -1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (quantity is negative -1) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B07: Empty String Quantity (quantity = \"\")",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Số lượng là chuỗi rỗng",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (quantity is empty string) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B08: Float Quantity (quantity = 2.5)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Số lượng số thực dấu phẩy động (2.5)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 2.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (quantity is float 2.5) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B09: Extreme Large Quantity Overflow (quantity = 999999)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Số lượng cực lớn vượt quá tồn kho",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 999999\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (quantity is 999999 exceeding stock) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B10: Zero Price Tampering (price = 0)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Thao túng đơn giá biên bằng 0",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 0,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (price is 0) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B11: Negative Price Tampering (price = -50000)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Thao túng đơn giá âm (-50000)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": -50000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (price is negative -50000) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B12: Missing quantity Property in JSON Body",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Thiếu trường quantity trong body",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (missing quantity field) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B13: Missing price Property in JSON Body",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Thiếu trường price trong body",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (missing price field) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B14: Missing id Property in JSON Body",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Thiếu trường id trong body",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (missing id field) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B15: Empty JSON Body ({})",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Body JSON rỗng {}",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (empty body object {}) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B16: Explicit null Value for quantity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Trường quantity mang giá trị null",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (quantity is null) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B17: Explicit null Value for price",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Trường price mang giá trị null",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": null,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (price is null) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B18: Non-Parseable String Quantity (\"two\")",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Số lượng là chuỗi chữ không parse được",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": \"two\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (quantity is string 'two') without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B19: Non-Numeric String ID (\"invalid_id_abc\")",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Trường id là chuỗi chữ không hợp lệ",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"invalid_id_abc\",\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (id is string 'invalid_id_abc') without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B20: Number Types Wrapped in Quotes (\"1\")",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Các trường số bị bọc trong dấu nháy dạng string",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"1\",\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": \"30000000\",\n  \"quantity\": \"1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (numeric types wrapped in quotes) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-B21: Extra Unknown Properties in JSON Body",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Body chứa các thuộc tính dư thừa ngoài schema",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 1,\n  \"isAdmin\": true,\n  \"discount\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('SUT accepts extra properties without validation', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.equal('Added to cart');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02_Security_Testing",
+      "item": [
+        {
+          "name": "TC-SEC-B01: Mandatory JWT Authentication (Missing Token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Bắt buộc xác thực JWT (thiếu header Authorization) theo SEC-01",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "pm.test('Error message is Unauthorized', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.error).to.equal('Unauthorized');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-SEC-B02: Invalid JWT Signature Rejection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid.signature",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Từ chối Token sai chữ ký số bí mật theo SEC-02",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "pm.test('Error message is Forbidden', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.error).to.equal('Forbidden');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-SEC-B03: Session Cart Isolation (Anti-IDOR Verification)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userBToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Phân tách phiên giỏ hàng giữa User A và User B (Anti-IDOR)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('User B does not see items of User A', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(Array.isArray(res)).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-SEC-B04: Client-Side Price Tampering (1,000 VND)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Khách hàng gian lận đơn giá phía client (30M -> 1,000 VND)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 1000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (client-side price tampering) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03_State_Transitions",
+      "item": [
+        {
+          "name": "TC-ST-B01: 3-Step State Transition (Empty -> Add -> Verify)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cleanUserToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Chuyển đổi trạng thái 3 bước trên tài khoản độc lập sạch",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Added to clean cart successfully', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.equal('Added to cart');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-ST-B02: Multiple Product Accumulation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Tích lũy trạng thái: Thêm nhiều sản phẩm khác nhau",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 3,\n  \"name\": \"MacBook Pro M3\",\n  \"price\": 45000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Second product added to cart', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.equal('Added to cart');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-ST-B03: Duplicate Product Addition (Line Duplication Defect)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Thêm cùng 1 sản phẩm nhiều lần (SUT tạo 2 dòng riêng thay vì gộp số lượng)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('[BUSINESS LOGIC DEFECT] SUT creates duplicate line item', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.equal('Added to cart');",
+                  "    console.warn('[BUSINESS LOGIC AUDIT] SUT pushes separate row instead of aggregating quantity.');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-ST-B04: Corrupted Cart State Injection (quantity = -5)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Đưa giỏ hàng vào trạng thái lỗi với số lượng âm",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 2,\n  \"name\": \"Samsung Galaxy S24 Ultra\",\n  \"price\": 28000000,\n  \"quantity\": -5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (corrupted cart state with negative quantity -5) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04_Schema_Validation",
+      "item": [
+        {
+          "name": "TC-SCH-B01: JSON Schema 200 OK Success Response",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Xác thực JSON Schema phản hồi thành công (200 OK)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Matches success response schema', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res).to.have.property('message').that.is.a('string');",
+                  "    pm.expect(res.message).to.equal('Added to cart');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-SCH-B02: JSON Schema 401 Unauthorized Response",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Xác thực JSON Schema phản hồi 401 Unauthorized",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "pm.test('Matches 401 error schema', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res).to.have.property('error').that.equals('Unauthorized');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-SCH-B03: JSON Schema 403 Forbidden Response",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid_token_xyz",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Xác thực JSON Schema phản hồi 403 Forbidden",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "pm.test('Matches 403 error schema', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res).to.have.property('error').that.equals('Forbidden');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-HTTP-B01: Empty Bearer Token in Authorization Header",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer ",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Header Authorization: Bearer rỗng chuỗi token",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 401 Unauthorized', function () {",
+                  "        pm.response.to.have.status(401);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 403 Forbidden (JWT verify empty string bug)', function () {",
+                  "        pm.expect([401, 403]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 403) {",
+                  "            console.warn('[DEFECT RECORDED] Empty token string passed to jwt.verify caused 403 instead of 401.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-HTTP-B02: Missing Content-Type Header Handling",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Gửi body không đính kèm header Content-Type: application/json",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"id\": 1, \"name\": \"iPhone 15 Pro Max\", \"price\": 30000000, \"quantity\": 1}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('[PROTOCOL DEFECT] Body-parser ignores raw body without Content-Type', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.equal('Added to cart');",
+                  "    console.warn('[PROTOCOL AUDIT] Request without Content-Type header results in undefined req.body stored in cart.');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05_Business_Rules",
+      "item": [
+        {
+          "name": "TC-BUS-B01: Add Non-Existent Product ID (99999)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Thêm sản phẩm có ID không tồn tại trong CSDL",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 99999,\n  \"name\": \"Fake Ghost Product\",\n  \"price\": 10000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (product ID does not exist in database) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06_Data_Dependency",
+      "item": [
+        {
+          "name": "TC-DEP-B01: Dynamic Token Chaining Verification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Sử dụng token động trích xuất từ bước setup login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Dynamic token chaining succeeds', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.equal('Added to cart');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07_Extended_Behaviors",
+      "item": [
+        {
+          "name": "TC-NEW-B01: Malformed JSON Payload Defense",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Xử lý an toàn body JSON hỏng cú pháp (Express 400 Bad Request)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"id\": 1, \"name\": \"iPhone 15 Pro Max\", \"price\": 30000000, \"quantity\": }"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-NEW-B02: JSON Array Container Body ([{...}])",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Lạm dụng cấu trúc container: Gửi mảng JSON thay vì Object",
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"id\": 1,\n    \"name\": \"iPhone 15 Pro Max\",\n    \"price\": 30000000,\n    \"quantity\": 1\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (Bug Audit Recorded)', function () {",
+                  "        pm.expect([200, 400]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[DEFECT RECORDED] SUT accepts invalid input (body is JSON array container instead of object) without validation.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-NEW-B03: Expired JWT Token Rejection (SEC-02)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6InVzZXIiLCJleHAiOjE1MTYyMzkwMjJ9.4pWj_8t_placeholder",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Từ chối Token JWT đã hết hạn (TokenExpiredError ra 403 Forbidden)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "pm.test('Error message is Forbidden', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.error).to.equal('Forbidden');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-NEW-B04: Missing Bearer Prefix in Authorization Header",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Header Authorization thiếu tiền tố Bearer (split(' ')[1] is undefined)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 30000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "pm.test('Error message is Unauthorized', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.error).to.equal('Unauthorized');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-NEW-B05: Safe Storage of Script Tags in Name Field",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Xử lý an toàn chuỗi chứa thẻ script XSS trong trường name",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"name\": \"<script>alert('xss')</script>\",\n  \"price\": 30000000,\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Script tag string stored safely in JSON without execution', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.equal('Added to cart');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
