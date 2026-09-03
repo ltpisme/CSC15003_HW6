@@ -1,7 +1,5 @@
 # HW06 - API Test Generator & Audit Workflow)
 
-> Lê Thanh Phong - 23127452
-
 ## 1. Sơ Đồ Quy Trình Tự Động Hóa (Generator & Audit Workflow Diagram)
 
 Quy trình phát triển bộ kiểm thử API tuân thủ nghiêm ngặt phương pháp **AI-First Generation $\rightarrow$ Human Audit $\rightarrow$ Student Correction $\rightarrow$ Newman/CI Execution $\rightarrow$ Evidence-Based Analysis**:
@@ -98,7 +96,7 @@ ALGORITHM API_Test_Generation_And_Audit_Lifecycle:
     FOR EACH api IN [API_A_Products, API_B_Cart, API_C_ImportProducts] DO:
         contract = ExtractContract(api_specification, api)
         code_slice = ExtractBackendImplementation(sut_source_code, api)
-    
+  
         // Sinh bản thảo thiết kế kiểm thử bao phủ 9 khía cạnh kỹ thuật
         ai_draft_plan = AI_Generate_Test_Plan(contract, code_slice, hw06_requirements, min_cases=35)
         ai_collection = AI_Generate_Postman_JSON(ai_draft_plan)

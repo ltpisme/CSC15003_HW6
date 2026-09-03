@@ -9,13 +9,13 @@
 
 Dự án kiểm thử HW06 tập trung vào 3 API đại diện cho 3 nhóm tính năng và quyền hạn khác nhau của ứng dụng E-Shop:
 
-1. **API A — `GET /api/products` (Catalog & Product Search):**
+1. **API A - `GET /api/products` (Catalog & Product Search):**
    - *Phạm vi:* Truy xuất danh mục sản phẩm, tìm kiếm theo từ khóa `search`, lọc theo `category`, phân trang dữ liệu (`page`, `limit`).
    - *Quyền hạn:* Public (Không yêu cầu xác thực).
-2. **API B — `POST /api/cart` (Shopping Cart Management):**
+2. **API B - `POST /api/cart` (Shopping Cart Management):**
    - *Phạm vi:* Thao tác giỏ hàng người dùng, thêm sản phẩm, cập nhật số lượng, kiểm soát tính toán đơn giá và tính toàn vẹn phiên.
    - *Quyền hạn:* Authenticated User (Yêu cầu JWT Bearer Token).
-3. **API C — `POST /api/admin/import-products` (Bulk Product Import):**
+3. **API C - `POST /api/admin/import-products` (Bulk Product Import):**
    - *Phạm vi:* Nhập hàng loạt sản phẩm từ cấu trúc mảng JSON hoặc tệp CSV, xử lý giao dịch CSDL, ghi nhận lỗi từng dòng.
    - *Quyền hạn:* Admin Only (Yêu cầu JWT Bearer Token có role `admin`).
 
@@ -59,6 +59,9 @@ Sinh viên trực tiếp thực hiện các hiệu chỉnh kỹ thuật:
 2. **Cơ chế tiền điều kiện tự động (00_Setup_Prerequisites):** Xây dựng các request đăng nhập tự động để lấy token động cho User A, User B (cách ly giỏ hàng) và Admin.
 3. **Chiến lược kiểm thử 2 nhánh (Dual-Run Strategy cho REQ-49):** Sử dụng cờ môi trường `strict_contract_assertion` duy nhất để vừa minh chứng được lỗi phần mềm (Bug Evidence Mode) vừa hỗ trợ chạy ổn định (All-Pass Baseline).
 4. **Tự động gắn Header bắt buộc:** Cài đặt Collection Pre-request Script tự động chèn `X-Student-Id: 23127452` và in console log cho 100% request.
+
+![console_student_id](https://hackmd.io/_uploads/SkT1nxPOMg.png)
+![github_action_failed](https://hackmd.io/_uploads/HJBk2ewuzx.png)
 
 ---
 
@@ -125,10 +128,10 @@ Bộ kiểm thử được thực thi tự động qua Newman CLI kết hợp pl
 ### Vòng đời kỹ thuật hoàn chỉnh cho từng API:
 
 ```
-[AI Generation] ──► [Human Audit] ──► [Student Correction] ──► [Execution] ──► [Analysis]
+[AI Generation] --> [Human Audit] --> [Student Correction] --> [Execution] --> [Analysis]
 ```
 
-### 10.1 API A — `GET /api/products` (39 Test Cases)
+### 10.1 API A - `GET /api/products` (39 Test Cases)
 
 - **AI Generation:** Sinh 39 ca kiểm thử bao phủ từ khóa hợp lệ, chuỗi dài, ký tự đặc biệt và SQL Injection.
 - **Human Audit:** Phát hiện AI đề xuất chèn header thủ công từng request; phát hiện giả định SQLi Tautology trả về 5 dòng là có thể bị sai lệch trên SQLite.
@@ -138,7 +141,7 @@ Bộ kiểm thử được thực thi tự động qua Newman CLI kết hợp pl
   - `TC-SEC-A01`: SUT ghép chuỗi thành `WHERE name LIKE '%test' OR '1'='1%'`. SQLite đánh giá `'1' = '1%'` là `false` nên trả về `[]` thay vì 5 sản phẩm.
   - `TC-NEW-A03`: Comment `--` cắt bỏ wildcard sau, làm câu lệnh thành `LIKE '%iPhone'`, đòi hỏi tên sản phẩm phải kết thúc bằng "iPhone" nên không khớp "iPhone 15 Pro Max".
 
-### 10.2 API B — `POST /api/cart` (41 Test Cases + 5 Setup Requests)
+### 10.2 API B - `POST /api/cart` (41 Test Cases + 5 Setup Requests)
 
 - **AI Generation:** Sinh 41 ca kiểm thử giỏ hàng; phát hiện SUT nhận giá và số lượng âm.
 - **Human Audit:** AI đề xuất restart server bằng tay để giỏ hàng rỗng cho ca `TC-ST-B01`; AI đề xuất nhân bản collection để làm xanh CI.
@@ -146,7 +149,7 @@ Bộ kiểm thử được thực thi tự động qua Newman CLI kết hợp pl
 - **Execution:** Chạy 46 request, 62 assertions. Chế độ All-Pass đạt 100% HTTP status pass; Chế độ Bug-Evidence ghi nhận chính xác 19 lỗi vi phạm hợp đồng.
 - **Analysis:** Backend `server.js:284-295` thiếu hoàn toàn khâu validation dữ liệu đầu vào.
 
-### 10.3 API C — `POST /api/admin/import-products` (41 Test Cases + 2 Setup Requests)
+### 10.3 API C - `POST /api/admin/import-products` (41 Test Cases + 2 Setup Requests)
 
 - **AI Generation:** Sinh 41 ca kiểm thử import lô, xử lý lỗi từng dòng và phân quyền.
 - **Human Audit:** Phát hiện assert số lượng CSDL tuyệt đối sẽ bị gãy do SQLite tích lũy dữ liệu qua các lần chạy.
@@ -158,14 +161,112 @@ Bộ kiểm thử được thực thi tự động qua Newman CLI kết hợp pl
 
 ## 11. Danh Sách Lỗi Phần Mềm Thực Tế Được Xác Nhận (Genuine SUT Bugs)
 
-1. **Bug C-01 (`TC-SEC-C01`):** Broken Function Level Authorization (SEC-03) — Người dùng thường gọi được API import của Admin (*Critical*).
-2. **Bug C-02 (`TC-DOM-C21`):** Unhandled Exception 500 khi mảng chứa phần tử `null` tại `POST /api/admin/import-products` (*High*).
-3. **Bug B-01 (`TC-SEC-B04`):** Thao túng giá từ client (`price = 1000`) mà backend không xác thực lại từ CSDL (*Critical*).
-4. **Bug B-02 (`TC-DOM-B06`):** Nhận số lượng âm (`quantity = -1`) làm sai lệch tổng tiền giỏ hàng (*High*).
-5. **Bug B-03 (`TC-DOM-B05`, `B07`, `B11`, `B15`, `B16`):** Thiếu toàn bộ validation cơ bản phía backend (nhận số lượng 0, giá âm, body rỗng) (*Medium*).
-6. **Bug B-04 (`TC-BUS-B01`):** Thêm thành công sản phẩm không tồn tại (`id = 99999`) vào giỏ hàng (*Medium*).
-7. **Bug A-01 (`TC-SEC-A02`):** SQL Injection UNION trích xuất bảng nhạy cảm `users` (*Critical*).
-8. **Bug A-02 (`TC-SCH-A03`):** Trang lỗi CSDL trả về MIME type `text/html` thay vì JSON error object (*Low*).
+## Critical
+
+### Bug C-01 - Broken Function Level Authorization
+
+**Test Case:** `TC-SEC-C01`
+
+Người dùng thường gọi được API import của Admin (*Critical*).
+
+[GitHub Issue - C-01](https://github.com/ltpisme/CSC15003_HW6/issues/1)
+
+---
+
+### Bug B-01 - Client Price Manipulation
+
+**Test Case:** `TC-SEC-B04`
+
+Thao túng giá từ client (`price = 1000`) mà backend không xác thực lại từ CSDL (*Critical*).
+
+[GitHub Issue - B-01](https://github.com/ltpisme/CSC15003_HW6/issues/3)
+
+---
+
+### Bug A-01 - SQL Injection UNION
+
+**Test Case:** `TC-SEC-A02`
+
+SQL Injection UNION trích xuất bảng nhạy cảm `users` (*Critical*).
+
+[GitHub Issue - A-01](https://github.com/ltpisme/CSC15003_HW6/issues/7)
+
+---
+
+## High
+
+### Bug C-02 - Unhandled Exception
+
+**Test Case:** `TC-DOM-C21`
+
+Unhandled Exception 500 khi mảng chứa phần tử `null` tại `POST /api/admin/import-products` (*High*).
+
+[GitHub Issue - C-02](https://github.com/ltpisme/CSC15003_HW6/issues/2)
+
+---
+
+### Bug B-02 - Negative Quantity
+
+**Test Case:** `TC-DOM-B06`
+
+Nhận số lượng âm (`quantity = -1`) làm sai lệch tổng tiền giỏ hàng (*High*).
+
+[GitHub Issue - B-02](https://github.com/ltpisme/CSC15003_HW6/issues/4)
+
+---
+
+## Medium
+
+### Bug B-03 - Missing Backend Validation
+
+**Test Cases:** `TC-DOM-B05`, `TC-DOM-B07`, `TC-DOM-B11`, `TC-DOM-B15`, `TC-DOM-B16`
+
+Thiếu toàn bộ validation cơ bản phía backend (nhận số lượng 0, giá âm, body rỗng) (*Medium*).
+
+[GitHub Issue - B-03](https://github.com/ltpisme/CSC15003_HW6/issues/5)
+
+---
+
+### Bug B-04 - Non-existent Product Accepted
+
+**Test Case:** `TC-BUS-B01`
+
+Thêm thành công sản phẩm không tồn tại (`id = 99999`) vào giỏ hàng (*Medium*).
+
+[GitHub Issue - B-04](https://github.com/ltpisme/CSC15003_HW6/issues/6)
+
+---
+
+## Low
+
+### Bug A-02 - Incorrect Error MIME Type
+
+**Test Case:** `TC-SCH-A03`
+
+Trang lỗi CSDL trả về MIME type `text/html` thay vì JSON error object (*Low*).
+
+[GitHub Issue - A-02](https://github.com/ltpisme/CSC15003_HW6/issues/8)
+
+---
+
+# Evidence
+
+Ảnh chụp toàn bộ danh sách GitHub Issues:
+
+![github-issue](https://hackmd.io/_uploads/rydAjlvuzx.png)
+
+## GitHub Issues
+
+| Bug  | Severity | Test Case                                          | Issue                                                   |
+| ---- | -------- | -------------------------------------------------- | ------------------------------------------------------- |
+| C-01 | Critical | `TC-SEC-C01`                                     | [C-01](https://github.com/ltpisme/CSC15003_HW6/issues/1) |
+| C-02 | High     | `TC-DOM-C21`                                     | [C-02](https://github.com/ltpisme/CSC15003_HW6/issues/2) |
+| B-01 | Critical | `TC-SEC-B04`                                     | [B-01](https://github.com/ltpisme/CSC15003_HW6/issues/3) |
+| B-02 | High     | `TC-DOM-B06`                                     | [B-02](https://github.com/ltpisme/CSC15003_HW6/issues/4) |
+| B-03 | Medium   | `TC-DOM-B05`, `B07`, `B11`, `B15`, `B16` | [B-03](https://github.com/ltpisme/CSC15003_HW6/issues/5) |
+| B-04 | Medium   | `TC-BUS-B01`                                     | [B-04](https://github.com/ltpisme/CSC15003_HW6/issues/6) |
+| A-01 | Critical | `TC-SEC-A02`                                     | [A-01](https://github.com/ltpisme/CSC15003_HW6/issues/7) |
+| A-02 | Low      | `TC-SCH-A03`                                     | [A-02](https://github.com/ltpisme/CSC15003_HW6/issues/8) |
 
 ---
 
@@ -182,17 +283,17 @@ Workflow `.github/workflows/api-testing.yml` được cấu hình tự động:
 
 ## 13. Minh Chứng Lượt Chạy CI/CD Thành Công & Thất Bại (CI Pass/Fail Evidence)
 
-- **Lượt chạy Thất bại (Failure Run) — ĐÃ CÓ BẰNG CHỨNG:**
+- **Lượt chạy Thất bại (Failure Run) - ĐÃ CÓ BẰNG CHỨNG:**
   - Commit `0e4f867` kích hoạt workflow GitHub Actions #4.
   - Minh chứng hình ảnh tại [`assets/github_action_failed.png`](file:///home/ltp/Code/Course/Testing/HW/CSC15003_HW6/assets/github_action_failed.png) thể hiện rõ trạng thái thất bại: `Process completed with exit code 1`.
   - Tệp HTML tải về từ artifact: [`reports/post-audit/github-action/newman-API-A.html`](file:///home/ltp/Code/Course/Testing/HW/CSC15003_HW6/reports/post-audit/github-action/newman-API-A.html).
-- **Lượt chạy Thành công (All-Pass Run) — KHOẢNG TRỐNG BẰNG CHỨNG GHI NHẬN:**
+- **Lượt chạy Thành công (All-Pass Run) - KHOẢNG TRỐNG BẰNG CHỨNG GHI NHẬN:**
   - Kết quả All-Pass hiện tại đã được chứng minh đầy đủ tại máy trạm cục bộ qua [`reports/post-audit/postman/newman-API-C-allpass.html`](file:///home/ltp/Code/Course/Testing/HW/CSC15003_HW6/reports/post-audit/postman/newman-API-C-allpass.html).
   - Tuy nhiên, trên GitHub Actions thực tế chưa có lượt chạy All-Pass tương ứng do pipeline ban đầu bị ngắt sớm. Khoảng trống này được ghi nhận trung thực theo quy định đề bài.
 
 ---
 
-## 14. Kiểm Thử Bảo Mật (Security Testing — SEC01–SEC07)
+## 14. Kiểm Thử Bảo Mật (Security Testing - SEC01–SEC07)
 
 Bộ kiểm thử bao phủ toàn diện 7 khía cạnh bảo mật:
 
@@ -235,7 +336,7 @@ Hồ sơ kiểm toán AI tại [`docs/AI_Audit.md`](file:///home/ltp/Code/Course
 
 ---
 
-## 18. Bài Đánh Giá Phê Bình Năng Lực AI (AI Critique: 200–300 Words)
+## 18. Bài Đánh Giá Phê Bình Năng Lực AI
 
 Mô hình AI thể hiện thế mạnh vượt trội trong việc phân tích cú pháp đặc tả API, tự động sinh khung kịch bản kiểm thử Postman với số lượng lớn (hơn 35 ca/API) và bao phủ nhanh chóng các phân hoạch tương đương, giá trị biên cơ bản. Việc gợi ý cấu trúc phân tầng JSON schema và các biến kiểm thử giúp giảm đáng kể thời gian thiết lập ban đầu cho người kiểm thử.
 
@@ -254,21 +355,3 @@ Tóm lại, AI là công cụ hỗ trợ sinh mã thô xuất sắc, nhưng sự
 1. **Khoảng trống lượt chạy All-Pass trên GitHub Actions:** Đã có bằng chứng chạy Fail trên GitHub Actions (Run #4), nhưng chưa có bằng chứng chạy All-Pass thực tế trên GitHub Actions (mới có báo cáo All-Pass trên máy trạm Newman). Cần thực hiện kích hoạt pipeline mới sau khi nộp cấu hình workflow.
 2. **Lỗi cú pháp JavaScript trong test script API B:** Ca `TC-DOM-B18` và `TC-DOM-B19` trong file `newman-API-B-allpass.html` ghi nhận lỗi cú pháp `SyntaxError` do nháy đơn lồng nhau trong lệnh `console.warn` của sinh viên, không phải lỗi từ backend API.
 3. **Sự phụ thuộc dữ liệu chéo CSDL:** Việc chạy API C (import dữ liệu có `price: "free"`) trước API A sẽ làm nhiễm dữ liệu bẩn vào CSDL SQLite, gây ra lỗi assertion phụ thuộc trên API A.
-
----
-
-## 20. Bảng Tự Đánh Giá (Self-Assessment)
-
-| STT | Tiêu Chí Đánh Giá (Criteria)           |     Yêu Cầu Đề Bài     |                  Hiện Thực Thực Tế                  |          Tự Đánh Giá          |
-| :-: | :------------------------------------------ | :--------------------------: | :-----------------------------------------------------: | :-------------------------------: |
-|  1  | Số lượng ca kiểm thử sinh bởi AI      |     $\ge 35$ ca / API     |             39 (A), 41 (B), 41 (C) = 121 ca             |      **ĐẠT (100%)**      |
-|  2  | Ca mở rộng do sinh viên tự viết        |      $\ge 5$ ca / API      |                Đúng 5 ca / API = 15 ca                |      **ĐẠT (100%)**      |
-|  3  | Bao phủ 9 tiêu chí thiết kế kiểm thử |   Đầy đủ 9 tiêu chí   |     Bao phủ từ Domain, Security đến Extensions     |      **ĐẠT (100%)**      |
-|  4  | Header chống gian lận`X-Student-Id`     | 100% request có log console |       Tự động hóa ở Collection-level Script       |      **ĐẠT (100%)**      |
-|  5  | Tự động hóa chuỗi xác thực Token     |   Không dùng token tĩnh   |        100% động qua`00_Setup_Prerequisites`        |      **ĐẠT (100%)**      |
-|  6  | Báo cáo Newman HTML chi tiết             |  Xuất báo cáo htmlextra  |        Đầy đủ 2 chế độ trong`reports/`        |      **ĐẠT (100%)**      |
-|  7  | Tích hợp CI/CD GitHub Actions             |       Tự động hóa       |      Workflow`.github/workflows/api-testing.yml`      |      **ĐẠT (100%)**      |
-|  8  | Minh chứng CI/CD có test case Fail        |  Có bằng chứng hợp lệ  |             Ảnh chụp Run#4 và file HTML             |      **ĐẠT (100%)**      |
-|  9  | Minh chứng CI/CD All-Pass                  |  Có bằng chứng hợp lệ  | Đạt mức Newman cục bộ; thiếu trên GitHub Actions | **PARTIAL (Ghi nhận Gap)** |
-| 10 | Báo cáo kiểm toán AI & Critique         |   200–300 từ phê bình   |       Hoàn thành đầy đủ trong mục 17 & 18       |      **ĐẠT (100%)**      |
-| 11 | Sơ đồ & Mã giả sinh kiểm thử         |    Tự vẽ, có mã giả    |     Hoàn thành tại`docs/api-test-generator.md`     |      **ĐẠT (100%)**      |
