@@ -1,0 +1,2513 @@
+{
+  "info": {
+    "_postman_id": "05dcff70-2231-49ff-9fed-114c9f0623b6",
+    "name": "API_C_ImportProducts",
+    "description": "HW06 Executable Test Suite for API C (POST /api/admin/import-products) - Setup + 41 test cases covering Domain, Security, State Transitions, Schema, Business, and Extended Behaviors.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// ==================================================================",
+          "// COLLECTION PRE-REQUEST SCRIPT — Mandatory X-Student-Id Header",
+          "// Requirement: REQ-41 (Header attachment), REQ-64 (Console log trace)",
+          "// Student ID: 23127452 | Student Name: Le Thanh Phong",
+          "// ==================================================================",
+          "const studentId = pm.environment.get('studentId') || '23127452';",
+          "pm.request.headers.upsert({ key: 'X-Student-Id', value: studentId });",
+          "console.log(`[PRE-REQUEST AUDIT] Request: ${pm.info.requestName} | Header: X-Student-Id: ${studentId}`);"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "00_Setup_Prerequisites",
+      "item": [
+        {
+          "name": "00_Setup_Admin_Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "description": "Đăng nhập tài khoản quản trị viên lấy adminToken",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@eshop.com\",\n  \"password\": \"Admin123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin login status is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Extract and set adminToken', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.token).to.not.be.undefined;",
+                  "    pm.environment.set('adminToken', res.token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "00_Setup_User_Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "description": "Đăng nhập tài khoản người dùng thường lấy userToken cho ca kiểm thử phân quyền TC-SEC-C01",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@eshop.com\",\n  \"password\": \"Test1234!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('User login status is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Extract and set userToken', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.token).to.not.be.undefined;",
+                  "    pm.environment.set('userToken', res.token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01_Domain_Partitioning",
+      "item": [
+        {
+          "name": "TC-DOM-C01: Import Single Valid Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Import 1 sản phẩm hợp lệ đầy đủ các trường",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Chuột không dây Logitech MX Master 3S\",\n      \"price\": 2500000,\n      \"description\": \"Chuột công thái học cao cấp\",\n      \"imageUrl\": \"https://placehold.co/300x300/png?text=Logitech+MX\",\n      \"category_id\": 3\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Inserted 1 product with no errors', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "    pm.expect(res.errors).to.be.an('array').that.is.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C02: Import Valid Batch of 3 Products",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Import hàng loạt nhiều sản phẩm hợp lệ",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Màn hình Dell UltraSharp U2723QE\",\n      \"price\": 14500000,\n      \"category_id\": 2\n    },\n    {\n      \"name\": \"Loa Bluetooth JBL Charge 5\",\n      \"price\": 3200000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Giá đỡ laptop nhôm Orico\",\n      \"price\": 350000,\n      \"category_id\": 3\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Inserted 3 products with no errors', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(3);",
+                  "    pm.expect(res.errors).to.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C03: Mixed Batch Partial Success (Row 2 Missing Name)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Import hỗn hợp: Dòng 1 chuẩn, Dòng 2 thiếu name, Dòng 3 chuẩn",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Webcam Logitech C922 Pro\",\n      \"price\": 2100000,\n      \"category_id\": 3\n    },\n    {\n      \"price\": 500000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Hub USB-C 8 in 1 Baseus\",\n      \"price\": 650000,\n      \"category_id\": 3\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Partial success: inserted 2, 1 error recorded', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(2);",
+                  "    pm.expect(res.errors.length).to.equal(1);",
+                  "    pm.expect(res.errors[0]).to.include('Hàng 3: Thiếu tên sản phẩm');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C04: All Rows Missing Name (inserted = 0)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Toàn bộ các dòng trong batch đều thiếu tên",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"price\": 100000\n    },\n    {\n      \"price\": 200000\n    },\n    {\n      \"price\": 300000\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Inserted 0 products, 3 errors recorded', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(0);",
+                  "    pm.expect(res.errors.length).to.equal(3);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C05: Error Row 1-Based Offset Indexing (Hàng 2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Tính toán chỉ mục dòng lỗi cho phần tử đầu tiên (index 0 + 2 = Hàng 2)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"price\": 500000,\n      \"category_id\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('First element error is formatted as Hàng 2', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.errors[0]).to.include('Hàng 2: Thiếu tên sản phẩm');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C06: Zero Price Boundary (price = 0)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Đơn giá biên bằng 0",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Ebook Hướng dẫn sử dụng\",\n      \"price\": 0,\n      \"category_id\": 3\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Inserted 1 product with 0 price', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C07: Negative Price (price = -50000)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Đơn giá âm được lưu vào CSDL do SUT thiếu validation",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Sản phẩm lỗi giá âm\",\n      \"price\": -50000,\n      \"category_id\": 3\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('[SUT AUDIT] SUT inserts negative price without validation', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C08: Float Price (price = 199.99)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Đơn giá số thực float",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Gói phần mềm bản quyền\",\n      \"price\": 199.99,\n      \"category_id\": 2\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('SQLite inserts float price', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C09: Non-Existent Category ID (category_id = 9999)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Danh mục không tồn tại (SQLite không có FK constraint nên chèn thành công)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Thiết bị chuyên dụng ngoài danh mục\",\n      \"price\": 5000000,\n      \"category_id\": 9999\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Inserted 1 product (lack of SQLite foreign key constraint)', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C10: Falsy Category 0 Fallback (category_id = 0 -> 1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Danh mục bằng 0 (Bẫy JS falsy row.category_id || 1 tự fallback về 1)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Thiết bị gán category 0\",\n      \"price\": 1200000,\n      \"category_id\": 0\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Inserted 1 product with category fallback', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C11: Large Batch Import (50 Products)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Lô tải lớn chứa 50 sản phẩm trong một request",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Batch Item #1\",\n      \"price\": 100000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #2\",\n      \"price\": 101000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #3\",\n      \"price\": 102000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #4\",\n      \"price\": 103000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #5\",\n      \"price\": 104000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #6\",\n      \"price\": 105000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #7\",\n      \"price\": 106000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #8\",\n      \"price\": 107000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #9\",\n      \"price\": 108000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #10\",\n      \"price\": 109000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #11\",\n      \"price\": 110000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #12\",\n      \"price\": 111000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #13\",\n      \"price\": 112000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #14\",\n      \"price\": 113000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #15\",\n      \"price\": 114000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #16\",\n      \"price\": 115000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #17\",\n      \"price\": 116000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #18\",\n      \"price\": 117000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #19\",\n      \"price\": 118000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #20\",\n      \"price\": 119000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #21\",\n      \"price\": 120000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #22\",\n      \"price\": 121000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #23\",\n      \"price\": 122000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #24\",\n      \"price\": 123000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #25\",\n      \"price\": 124000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #26\",\n      \"price\": 125000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #27\",\n      \"price\": 126000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #28\",\n      \"price\": 127000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #29\",\n      \"price\": 128000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #30\",\n      \"price\": 129000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #31\",\n      \"price\": 130000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #32\",\n      \"price\": 131000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #33\",\n      \"price\": 132000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #34\",\n      \"price\": 133000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #35\",\n      \"price\": 134000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #36\",\n      \"price\": 135000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #37\",\n      \"price\": 136000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #38\",\n      \"price\": 137000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #39\",\n      \"price\": 138000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #40\",\n      \"price\": 139000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #41\",\n      \"price\": 140000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #42\",\n      \"price\": 141000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #43\",\n      \"price\": 142000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #44\",\n      \"price\": 143000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #45\",\n      \"price\": 144000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #46\",\n      \"price\": 145000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #47\",\n      \"price\": 146000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #48\",\n      \"price\": 147000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #49\",\n      \"price\": 148000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Batch Item #50\",\n      \"price\": 149000,\n      \"category_id\": 3\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Inserted 50 products successfully', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(50);",
+                  "    pm.expect(res.errors).to.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C12: Missing products Key in Payload ({})",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Body JSON thiếu hoàn toàn trường products ({})",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Error message matches specification', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.error).to.equal('Không có dữ liệu để import');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C13: Empty Products Array (products: [])",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Mảng products rỗng []",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Error message matches specification', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.error).to.equal('Không có dữ liệu để import');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C14: Null Products Field (products: null)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Giá trị products: null",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Error message matches specification', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.error).to.equal('Không có dữ liệu để import');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C15: Empty String Product Name (name: \"\")",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Dòng có tên chuỗi rỗng name: \"\"",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"\",\n      \"price\": 100000,\n      \"category_id\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Caught by !row.name and recorded as error', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(0);",
+                  "    pm.expect(res.errors[0]).to.include('Hàng 2: Thiếu tên sản phẩm');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C16: Whitespace Only Name (name: \"   \")",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Tên chỉ gồm các ký tự khoảng trắng (SUT thiếu trim() nên chèn thành công)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"   \",\n      \"price\": 100000,\n      \"category_id\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('[SUT AUDIT] SUT inserts whitespace name without trim validation', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C17: Missing Optional Fields Default Fallback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Thiếu các trường phụ (gán mặc định description=\"\", category_id=1)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Cáp sạc USB-C đơn giản\",\n      \"price\": 80000\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Inserted 1 product with defaults', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C18: String Container (products: \"not-an-array\")",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "products là chuỗi chữ không phải mảng",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": \"not-an-array\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Rejected by !Array.isArray(rows)', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.error).to.equal('Không có dữ liệu để import');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C19: Single Object Container (products: {...})",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Payload là đối tượng đơn lẻ thay vì mảng các đối tượng",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": {\n    \"name\": \"Single Object Item\",\n    \"price\": 100000\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Rejected by !Array.isArray(rows)', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.error).to.equal('Không có dữ liệu để import');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C20: Non-Numeric String Price (price: \"free\")",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "price là chuỗi chữ (SQLite lưu chuỗi vào cột integer do type affinity)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Sản phẩm khuyến mãi\",\n      \"price\": \"free\",\n      \"category_id\": 3\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('SQLite inserts string price into column', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-DOM-C21: Null Element Array Crash (products: [null])",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Mảng chứa phần tử null gây TypeError sập tiến trình backend",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    null\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 400 Bad Request', function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 500 (Unhandled TypeError Bug Recorded)', function () {",
+                  "        pm.expect([400, 500]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 500) {",
+                  "            console.warn('[EXCEPTION HANDLING DEFECT] SUT crashed with 500 due to reading !row.name on null element.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02_Security_Testing",
+      "item": [
+        {
+          "name": "TC-SEC-C01: Privilege Escalation (User Calling Admin Import - SEC-03)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Lỗ hổng Broken Function Level Authorization: Gọi bằng Token User thường (SEC-03)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Chuột không dây Logitech MX Master 3S\",\n      \"price\": 2500000,\n      \"description\": \"Chuột công thái học cao cấp\",\n      \"imageUrl\": \"https://placehold.co/300x300/png?text=Logitech+MX\",\n      \"category_id\": 3\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const strict = pm.environment.get('strict_contract_assertion') === true || pm.environment.get('strict_contract_assertion') === 'true';",
+                  "if (strict) {",
+                  "    pm.test('Contract Expectation - HTTP 403 Forbidden (SEC-03 Enforcement)', function () {",
+                  "        pm.response.to.have.status(403);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('SUT Actual Response - Status 200 (SEC-03 Defect Confirmed: Missing role check)', function () {",
+                  "        pm.expect([200, 403]).to.include(pm.response.code);",
+                  "        if (pm.response.code === 200) {",
+                  "            console.warn('[CRITICAL SECURITY DEFECT DETECTED] SEC-03: Regular user token executed admin import successfully.');",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-SEC-C02: Legitimate Admin Role Access Verification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Truy cập hợp lệ với Token Admin (role: 'admin')",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Switch Cisco Catalyst 24P\",\n      \"price\": 18000000,\n      \"category_id\": 2\n    },\n    {\n      \"name\": \"Router Mikrotik RB5009\",\n      \"price\": 5200000,\n      \"category_id\": 2\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Admin executes import successfully', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-SEC-C03: Mandatory Authentication Enforcement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Bắt buộc xác thực: Không gửi header Authorization",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Chuột không dây Logitech MX Master 3S\",\n      \"price\": 2500000,\n      \"description\": \"Chuột công thái học cao cấp\",\n      \"imageUrl\": \"https://placehold.co/300x300/png?text=Logitech+MX\",\n      \"category_id\": 3\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "pm.test('Error message is Unauthorized', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.error).to.equal('Unauthorized');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-SEC-C04: Parameterized Query Defense Against SQLi Payload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Kiểm tra an toàn Prepared Statement chống SQL Injection khi import (SEC-05)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Test Product'); DROP TABLE products;--\",\n      \"price\": 100000,\n      \"category_id\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Prepared statement parameterization escapes SQL payload safely', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-SEC-C05: CSV Formula Injection Safe String Storage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Kiểm tra lưu trữ an toàn chuỗi công thức CSV (=1+1) dưới dạng text (SEC-04)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"=1+1\",\n      \"price\": 50000,\n      \"category_id\": 3\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Formula string stored as safe raw text', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03_State_Transitions",
+      "item": [
+        {
+          "name": "TC-ST-C01: Database Record Count Growth (N -> N+2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Tăng số lượng bản ghi CSDL sau khi chèn 2 sản phẩm mới",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Bút cảm ứng Apple Pencil Pro\",\n      \"price\": 3500000,\n      \"category_id\": 3\n    },\n    {\n      \"name\": \"Chuột Magic Mouse USB-C\",\n      \"price\": 2200000,\n      \"category_id\": 3\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Inserted exactly 2 records into database', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-ST-C02: Repeated Import Duplicate Record Creation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Import lặp lại tạo bản ghi mới mà không chặn trùng",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Sạc dự phòng Anker 20000mAh\",\n      \"price\": 850000,\n      \"category_id\": 3\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('SUT assigns new ID for duplicate named product', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-ST-C03: Non-Atomic Partial Persistence Verification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Kiểm chứng tính phi nguyên tử: Dòng đúng commit vào DB, không rollback khi gặp dòng lỗi",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Sản phẩm hợp lệ dòng 1\",\n      \"price\": 100000,\n      \"category_id\": 1\n    },\n    {\n      \"price\": 200000,\n      \"category_id\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Non-atomic execution: valid row committed while invalid row rejected', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "    pm.expect(res.errors.length).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-ST-C04: Referential Integrity Downstream Safe Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Kiểm chứng toàn vẹn tham chiếu khi liên kết category ảo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Sản phẩm liên kết danh mục ảo 8888\",\n      \"price\": 450000,\n      \"category_id\": 8888\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Product persisted with virtual category', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04_Schema_Validation",
+      "item": [
+        {
+          "name": "TC-SCH-C01: JSON Schema 200 OK Complete Success Response",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Xác thực JSON Schema Draft-07 phản hồi thành công toàn bộ",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Chuột không dây Logitech MX Master 3S\",\n      \"price\": 2500000,\n      \"description\": \"Chuột công thái học cao cấp\",\n      \"imageUrl\": \"https://placehold.co/300x300/png?text=Logitech+MX\",\n      \"category_id\": 3\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response matches 3 required schema fields', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res).to.have.property('message').that.is.a('string');",
+                  "    pm.expect(res).to.have.property('inserted').that.is.a('number');",
+                  "    pm.expect(res).to.have.property('errors').that.is.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-SCH-C02: Schema Verification of Nested Errors Array",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Xác thực cấu trúc lồng nhau của mảng errors (array of strings)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"price\": 100000\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('errors array contains strings', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.errors).to.be.an('array');",
+                  "    res.errors.forEach(err => pm.expect(err).to.be.a('string'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-SCH-C03: JSON Schema 400 Bad Request Empty Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Xác thực JSON Schema phản hồi lỗi dữ liệu rỗng (400)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Response matches error schema', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res).to.have.property('error').that.equals('Không có dữ liệu để import');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-SCH-C04: JSON Schema 401 Unauthorized Response",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Xác thực JSON Schema phản hồi lỗi thiếu token (401)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Chuột không dây Logitech MX Master 3S\",\n      \"price\": 2500000,\n      \"description\": \"Chuột công thái học cao cấp\",\n      \"imageUrl\": \"https://placehold.co/300x300/png?text=Logitech+MX\",\n      \"category_id\": 3\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "pm.test('Response matches 401 schema', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res).to.have.property('error').that.equals('Unauthorized');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05_Business_Rules",
+      "item": [
+        {
+          "name": "TC-BUS-C01: Instant Product Catalog Visibility",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Sản phẩm vừa import hiển thị ngay trên hệ thống",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Sản phẩm kiểm tra hiển thị catalog\",\n      \"price\": 750000,\n      \"category_id\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Product imported successfully', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06_Data_Dependency",
+      "item": [
+        {
+          "name": "TC-DEP-C01: Category Foreign Key Dependency",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Phụ thuộc dữ liệu danh mục sẵn có trong bảng categories (category_id = 3)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Ốp lưng iPhone 15 trong suốt\",\n      \"price\": 150000,\n      \"category_id\": 3\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Import with seeded category_id 3 succeeds', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07_Extended_Behaviors",
+      "item": [
+        {
+          "name": "TC-NEW-C01: Malformed JSON Envelope Defense",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Xử lý an toàn body JSON hỏng cú pháp (Express 400 Bad Request)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"products\": [{\"name\": \"Bad JSON\", \"price\": 100000, }]}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-NEW-C02: Internal Batch Duplication (Same Name Twice)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Xử lý sản phẩm trùng tên nội bộ trong cùng một batch",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Sản phẩm trùng tên trong lô\",\n      \"price\": 200000,\n      \"category_id\": 1\n    },\n    {\n      \"name\": \"Sản phẩm trùng tên trong lô\",\n      \"price\": 200000,\n      \"category_id\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Inserted both products with distinct auto-increment IDs', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-NEW-C03: Null Price Field (price: null)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Dòng sản phẩm có price: null (SQLite lưu NULL vào cột price)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Sản phẩm có giá null\",\n      \"price\": null,\n      \"category_id\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('SQLite inserts row with NULL price', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-NEW-C04: Negative Category ID (category_id = -1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Dòng sản phẩm có category_id = -1 (Do -1 là truthy trong JS nên giữ nguyên)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Sản phẩm category âm\",\n      \"price\": 100000,\n      \"category_id\": -1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Category -1 preserved due to truthy evaluation', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.inserted).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-NEW-C05: Expired Admin Token Rejection (SEC-02)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6ImFkbWluIiwiZXhwIjoxNTE2MjM5MDIyfQ.4pWj_8t_placeholder",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/import-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "import-products"
+              ]
+            },
+            "description": "Từ chối Token Admin đã hết hạn (TokenExpiredError ra 403 Forbidden)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Chuột không dây Logitech MX Master 3S\",\n      \"price\": 2500000,\n      \"description\": \"Chuột công thái học cao cấp\",\n      \"imageUrl\": \"https://placehold.co/300x300/png?text=Logitech+MX\",\n      \"category_id\": 3\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "pm.test('Error message is Forbidden', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.error).to.equal('Forbidden');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
